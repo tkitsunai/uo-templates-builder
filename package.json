@@ -11,6 +11,7 @@
     "deploy": "pnpm build && gh-pages -d dist"
   },
   "dependencies": {
+    "lz-string": "^1.5.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-hot-toast": "^2.6.0"

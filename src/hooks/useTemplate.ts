@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import toast from 'react-hot-toast';
+import LZString from 'lz-string';
 import { Skill, Equipment, Template, SkillSummary, SavedTemplate } from '../types';
 
 const STORAGE_KEY = 'uo-template-builder-data';
@@ -65,8 +66,11 @@ export const useTemplate = () => {
     const sharedData = params.get('data');
     if (sharedData) {
       try {
-        const decoded = atob(sharedData);
-        const parsed: Template = JSON.parse(decodeURIComponent(decoded));
+        const decompressed = LZString.decompressFromEncodedURIComponent(sharedData);
+        if (!decompressed) {
+          throw new Error('Failed to decompress data');
+        }
+        const parsed: Template = JSON.parse(decompressed);
         setTemplateName(parsed.name || '');
         setSkills(parsed.skills || createDefaultSkills());
         setEquipment(parsed.equipment || createDefaultEquipment());
@@ -161,8 +165,8 @@ export const useTemplate = () => {
   const shareTemplate = useCallback(() => {
     const data: Template = { name: templateName, skills, equipment };
     const json = JSON.stringify(data);
-    const encoded = btoa(encodeURIComponent(json));
-    const url = `${window.location.origin}${window.location.pathname}?data=${encoded}`;
+    const compressed = LZString.compressToEncodedURIComponent(json);
+    const url = `${window.location.origin}${window.location.pathname}?data=${compressed}`;
     
     navigator.clipboard.writeText(url).then(() => {
       toast.success('Share URL copied to clipboard!');
@@ -285,8 +289,8 @@ export const useTemplate = () => {
         equipment: template.equipment 
     };
     const json = JSON.stringify(data);
-    const encoded = btoa(encodeURIComponent(json));
-    const url = `${window.location.origin}${window.location.pathname}?data=${encoded}`;
+    const compressed = LZString.compressToEncodedURIComponent(json);
+    const url = `${window.location.origin}${window.location.pathname}?data=${compressed}`;
     
     navigator.clipboard.writeText(url).then(() => {
       toast.success(`Share URL for "${template.name}" copied!`);
